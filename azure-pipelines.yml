@@ -9,6 +9,7 @@ pool:
 steps:
 - task: AzurePowerShell@3
   inputs:
+    azureSubscription: 'AzureRmPipeline.BrunoMattos'
     ScriptPath: 'Deploy-AzureResourceGroup.ps1'
     azurePowerShellVersion: LatestVersion
 
