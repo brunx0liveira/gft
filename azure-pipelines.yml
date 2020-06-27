@@ -1,1 +1,15 @@
-ergdfbvf
+
+trigger:
+  - maste
+
+pool:
+  name: Criar RG e VNET
+  demands: azureps
+
+steps:
+- task: AzurePowerShell@3
+  inputs:
+    azureSubscription: ''
+    ScriptPath: 'Deploy-AzureResourceGroup.ps1'
+    azurePowerShellVersion: LatestVersion
+
