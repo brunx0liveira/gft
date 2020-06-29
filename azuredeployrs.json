@@ -1,0 +1,682 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "comments": "Este template realiza deploy de 1 VNET; 2 SNET; 1 APIM e 1 AKS.",
+    "author": "Bruno Mattos", 
+    "githubUsername": "brunx0liveira",
+    "dateUpdated": "2020-06-28"
+  },
+  "parameters": {
+
+    // ADD TAGS - Parameters
+    "TAGS": {
+      "type": "object",
+      "defaultValue": {
+        "Company": "GFTBrasil",
+        "Environment": "Dev",
+        "Solution": "WebAPI",
+        "Note": "KeepOnlineOnlyWorkTime"}
+    },  
+    // ADD VNET - Paramaters
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "vnet-gft-dev",
+      "metadata": {
+        "description": "vnet-gft-dev"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "172.16.0.0/16",
+      "metadata": {
+        "description": "vnet-gft-dev"
+      }
+    },
+    // ADD SNET - Parameters
+    "subnet1Prefix": {
+      "type": "string",
+      "defaultValue": "172.16.7.0/24",
+      "metadata": {
+        "description": "snet01-gft-dev"
+      }
+    },
+    "subnet1Name": {
+      "type": "string",
+      "defaultValue": "snet01-gft-dev",
+      "metadata": {
+        "description": "snet01-gft-dev"
+      }
+    },
+    "subnet2Prefix": {
+      "type": "string",
+      "defaultValue": "172.16.8.0/24",
+      "metadata": {
+        "description": "snet02-gft-dev"
+      }
+    },
+    "subnet2Name": {
+      "type": "string",
+      "defaultValue": "snet02-gft-dev",
+      "metadata": {
+        "description": "snet02-gft-dev"
+      }
+    },
+    // Loacalizacao - Parameters
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    // NSG - Parameters
+    "NsgName": {
+      "type": "string",
+      "defaultValue": "nsg-dev-001",
+      "metadata": {
+        "description": "This is name of the networkSecurityGroup that will be assigned to Application Subnet"
+      }
+    },
+    // APIM - Parameters
+    "apiManagementServiceName": {
+      "type": "string",
+      "defaultValue": "apim-dev-001",
+      "metadata": {
+        "description": "Name of the API Management service."
+      }
+    },
+    "publisherEmail": {
+      "type": "string",
+      "minLength": 1,  
+      "defaultValue": "bruno.0liveira@hotmail.com",
+      "metadata": {
+        "description": "The email address of the owner of the service"
+      }
+    },
+    "publisherName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Bruno-Mattos",
+      "metadata": {
+        "description": "The name of the owner of the service"
+      }
+    },
+    "sku": {
+      "type": "string",
+      "allowedValues": [
+        "Developer",
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "Developer",
+      "metadata": {
+        "description": "The pricing tier of this API Management service"
+      }
+    },
+    "skuCount": {
+      "type": "string",
+      "allowedValues": [
+        "1",
+        "2"
+      ],
+      "defaultValue": "1",
+      "metadata": {
+        "description": "The instance size of this API Management service."
+      }
+    }
+    // // AKS - Parameters
+    // "clusterName": {
+    //     "type": "string",
+    //     "defaultValue":"aks-dev-001",
+    //     "metadata": {
+    //         "description": "The name of the Managed Cluster resource."
+    //     }
+    // },
+    // "dnsPrefix": {
+    //     "type": "string",
+    //     "defaultValue": "aks-gft-dev",
+    //     "metadata": {
+    //         "description": "Optional DNS prefix to use with hosted Kubernetes API server FQDN."
+    //     }
+    // },
+    // "osDiskSizeGB": {
+    //     "defaultValue": 100,
+    //     "type": "int",
+    //     "minValue": 0,
+    //     "maxValue": 250,
+    //     "metadata": {
+    //         "description": "Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 0 to 1023. Specifying 0 will apply the default disk size for that agentVMSize."
+    //     }
+    // },
+    // "agentCount": {
+    //     "type": "int",
+    //     "defaultValue": 3,
+    //     "metadata": {
+    //         "description": "The number of nodes for the cluster."
+    //     },
+    //     "minValue": 1,
+    //     "maxValue": 6
+    // },
+    // "agentVMSize": {
+    //     "type": "string",
+    //     "defaultValue": "Standard_DS2_v2",
+    //     "metadata": {
+    //         "description": "The size of the Virtual Machine."
+    //     }
+    // },
+    // "linuxAdminUsername": {
+    //     "type": "string",
+    //     "defaultValue": "bmattos",
+    //     "metadata": {
+    //         "description": "User name for the Linux Virtual Machines."
+    //     }
+    // },
+    // "sshRSAPublicKey": {
+    //     "type": "string",
+    //     "metadata": {
+    //         "description": "Configure all linux machines with the SSH RSA public key string. Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
+    //     }
+    // },
+    // "servicePrincipalClientId": {
+    //     "metadata": {
+    //         "description": "Client ID (used by cloudprovider)"
+    //     },
+    //     "type": "securestring"
+    // },
+    // "servicePrincipalClientSecret": {
+    //     "metadata": {
+    //         "description": "The Service Principal Client Secret."
+    //     },
+    //     "type": "securestring"
+    // },
+    // "osType": {
+    //     "type": "string",
+    //     "defaultValue": "Linux",
+    //     "allowedValues": [
+    //         "Linux"
+    //     ],
+    // "metadata": {
+    //         "description": "The type of operating system."
+    //     }
+    // },
+    // "kubernetesVersion": {
+    //     "defaultValue": "1.12.6",
+    //     "type": "string",
+    //     "metadata": {
+    //         "description": "The version of Kubernetes."
+    //     }
+    // },
+    // "enableHttpApplicationRouting": {
+    //     "defaultValue": false,
+    //     "type": "bool",
+    //     "metadata": {
+    //         "description": "boolean flag to turn on and off of http application routing"
+    //     }
+    // },
+    // "networkPlugin": {
+    //     "allowedValues": [
+    //         "azure",
+    //         "kubenet"
+    //     ],
+    //     "defaultValue": "azure",
+    //     "type": "string",
+    //     "metadata": {
+    //         "description": "Network plugin used for building Kubernetes network."
+    //     }
+    // },
+    // "maxPods": {
+    //     "defaultValue": 12,
+    //     "type": "int",
+    //     "metadata": {
+    //         "description": "Maximum number of pods that can run on a node."
+    //     }
+    // },
+    // "enableRBAC": {
+    //     "defaultValue": true,
+    //     "type": "bool",
+    //     "metadata": {
+    //         "description": "boolean flag to turn on and off of RBAC"
+    //     }
+    // },
+    // "existingVirtualNetworkName": {
+    //     "type": "string",
+    //     "defaultValue": "[parameters('vnetName')]",
+    //     "metadata": {
+    //         "description": "Name of an existing VNET that will contain this AKS deployment."
+    //     }
+    // },
+    // "existingVirtualNetworkResourceGroup": {
+    //     "type": "string",
+    //     "defaultValue": "[parameters('vnetName')]",
+    //     "metadata": {
+    //         "description": "Name of the existing VNET resource group"
+    //     }
+    // },
+    // "existingSubnetName": {
+    //     "type": "string",
+    //     "defaultValue": "[parameters('subnet2Name')]",
+    //     "metadata": {
+    //         "description": "Subnet name that will contain the App Service Environment"
+    //     }
+    // },
+    // "existingSubnetRoleAssignmentName":{
+    //     "type": "string",
+    //     "defaultValue": "[newGuid()]",
+    //     "metadata": {
+    //         "description": "Name of the Role Assignment created for the Service Principal in the existing Subnet"
+    //     }
+    // },
+    // "serviceCidr": {
+    //     "type": "string",
+    //     "defaultValue": "10.0.0.0/16",
+    //     "metadata": {
+    //         "description": "A CIDR notation IP range from which to assign service cluster IPs."
+    //     }
+    // },
+    // "dnsServiceIP": {
+    //     "type": "string",
+    //     "defaultValue": "10.0.0.10",
+    //     "metadata": {
+    //         "description": "Containers DNS server IP address."
+    //     }
+    // },
+    // "dockerBridgeCidr": {
+    //     "type": "string",
+    //     "defaultValue": "[parameters('subnet1Prefix')]",
+    //     "metadata": {
+    //         "description": "A CIDR notation IP for Docker bridge."
+    //     }
+    // },
+    // "AAD_ClientAppID":{
+    //     "type":"securestring",
+    //     "metadata": {
+    //         "description": "The Application ID for the Client App Service Principal"
+    //     }
+    // },
+    // "AAD_ServerAppID":{
+    //     "type":"securestring",
+    //     "metadata": {
+    //         "description": "The Application ID for the Server App Service Principal"
+    //     }
+    // },
+    // "AAD_TenantID":{
+    //     "type":"securestring",
+    //     "metadata": {
+    //         "description": "The Azure AD Tenant where the cluster will reside"
+    //     }
+    // },
+    // "AAD_ServerAppSecret":{
+    //     "type":"securestring",
+    //     "metadata": {
+    //         "description": "The Service Principal Secret for the Client App Service Principal"
+    //     }
+    // }
+  },
+  
+  "variables": {
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet1Name'))]"
+  },
+
+  "resources": [  
+
+    // VNET e SNET - ADD Resources
+    {
+      "apiVersion": "2018-10-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('TAGS')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2018-10-01",
+          "type": "subnets",
+          "location": "[parameters('location')]",
+          "name": "[parameters('subnet1Name')]",
+          "dependsOn": [
+            "[parameters('vnetName')]"
+          ],
+          "properties": {
+            "addressPrefix": "[parameters('subnet1Prefix')]"
+          }
+        },
+        {
+          "apiVersion": "2018-10-01",
+          "type": "subnets",
+          "location": "[parameters('location')]",
+          "name": "[parameters('subnet2Name')]",
+          "dependsOn": [
+            "[parameters('vnetName')]",
+            "[parameters('subnet1Name')]"
+          ],
+          "properties": {
+            "addressPrefix": "[parameters('subnet2Prefix')]"
+          }
+        }
+      ]
+    },
+
+    // NSG - ADD Resource
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('NsgName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-10-01",
+      "dependsOn": [
+        "[parameters('vnetName')]",
+        "[parameters('subnet1Name')]"
+      ],
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Client_communication_to_API_Management",
+            "properties": {
+              "description": "Chamada do client",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+
+          {
+            "name": "Secure_Client_communication_to_API_Management",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[parameters('subnet1Prefix')]",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Management_endpoint_for_Azure_portal_and_Powershell",            
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3443",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "[parameters('subnet1Prefix')]",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Dependency_on_Redis_Cache",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6381-6383",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "[parameters('subnet1Prefix')]",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Dependency_on_Azure_SQL",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1433",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "[parameters('subnet1Prefix')]",
+              "access": "Allow",
+              "priority": 140,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Dependency_for_Log_to_event_Hub_policy",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "5671",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "[parameters('subnet1Prefix')]",
+              "access": "Allow",
+              "priority": 150,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Dependency_on_Redis_Cache_outbound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6381-6383",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "[parameters('subnet1Prefix')]",
+              "access": "Allow",
+              "priority": 160,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Dependency_on_Azure_File_Share_for_GIT",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "445",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "[parameters('subnet1Prefix')]",
+              "access": "Allow",
+              "priority": 170,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Connect_To_SMTP_Relay_For_SendingEmails",
+            "properties": {
+              "description": "APIM features the ability to generate email traffic as part of the data plane and the management plane",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 180,
+              "direction": "Outbound",              
+              "destinationPortRanges": [
+                "25",
+                "587",
+                "25028"
+              ]
+            }
+          },
+          {
+            "name": "SubNet_AKS_To_APIM_In",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "[parameters('subnet2Prefix')]",
+              "access": "Allow",
+              "priority": 190,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "APIM_To_SubNet_AKS_In",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnet2Prefix')]",
+              "destinationAddressPrefix": "[parameters('subnet1Prefix')]",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "SubNet_AKS_To_APIM_Out",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "[parameters('subnet2Prefix')]",
+              "access": "Allow",
+              "priority": 210,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "APIM_To_SubNet_AKS_Out",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnet2Prefix')]",
+              "destinationAddressPrefix": "[parameters('subnet1Prefix')]",
+              "access": "Allow",
+              "priority": 220,
+              "direction": "Outbound"
+            }
+          },
+
+          {
+            "name": "Authenticate_To_Azure_Active_Directory",            
+            "properties": {
+              "description": "Connect to Azure Active Directory for Developer Portal Authentication or for Oauth2 flow during any Proxy Authentication",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 230,
+              "direction": "Outbound",
+              "destinationPortRanges": [
+                "80",
+                "443"
+              ]
+            }
+          },
+          {
+            "name": "Deny_All_Internet_Outbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[parameters('subnet1Prefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 999,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    },
+    // APIM - ADD Resource
+    {
+      "apiVersion": "2018-01-01",
+      "name": "[parameters('apiManagementServiceName')]",
+      "type": "Microsoft.ApiManagement/service",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('TAGS')]",
+      "dependsOn": [
+        "[parameters('vnetName')]",
+        "[parameters('subnet1Name')]",
+        "[parameters('NsgName')]" 
+      ],
+      "sku": {
+        "name": "[parameters('sku')]",
+        "capacity": "[parameters('skuCount')]"
+      },
+      "properties": {
+        "publisherEmail": "[parameters('publisherEmail')]",
+        "publisherName": "[parameters('publisherName')]",
+        "virtualNetworkType": "External",
+        "virtualNetworkConfiguration": {
+          "subnetResourceId": "[variables('subnetRef')]"
+        }
+      }
+    }
+    // // AKS - ADD Resource
+    // {
+    // "apiVersion": "2020-03-01",
+    // "type": "Microsoft.ContainerService/managedClusters",
+    // "location": "[parameters('location')]",
+    // "name": "[parameters('clusterName')]",
+    // "tags": "[parameters('TAGS')]",
+    // "dependsOn": [
+    //   "[parameters('vnetName')]",
+    //   "[parameters('subnet1Name')]",
+    //   "[parameters('NsgName')]" 
+    // ],
+    // "properties": {
+    //     "dnsPrefix": "[parameters('dnsPrefix')]",
+    //     "agentPoolProfiles": [
+    //         {
+    //         "name": "agentpool",
+    //         "osDiskSizeGB": "[parameters('osDiskSizeGB')]",
+    //         "count": "[parameters('agentCount')]",
+    //         "vmSize": "[parameters('agentVMSize')]",
+    //         "osType": "[parameters('osType')]",
+    //         "storageProfile": "ManagedDisks",
+    //         "vnetSubnetID": "[parameters('subnet2Name')]",
+    //         "maxPods": "[parameters('maxPods')]"
+    //         }
+    //     ],
+    //     "linuxProfile": {
+    //         "adminUsername": "[parameters('linuxAdminUsername')]",
+    //         "ssh": {
+    //             "publicKeys": [
+    //             {
+    //             "keyData": "[parameters('sshRSAPublicKey')]"
+    //             }
+    //             ]
+    //         }
+    //     },
+    //     "servicePrincipalProfile": {
+    //         "clientId": "[parameters('servicePrincipalClientId')]",
+    //         "Secret": "[parameters('servicePrincipalClientSecret')]"
+    //     },
+
+    //     "kubernetesVersion": "[parameters('kubernetesVersion')]",
+    //     "enableRBAC": "[parameters('enableRBAC')]",
+    //     "aadProfile": {
+    //         "clientAppID": "[parameters('AAD_ClientAppID')]",
+    //         "serverAppID": "[parameters('AAD_ServerAppID')]",
+    //         "tenantID": "[parameters('AAD_TenantID')]",
+    //         "serverAppSecret": "[parameters('AAD_ServerAppSecret')]"
+    //     },
+    //     "addonProfiles": {
+    //         "httpApplicationRouting": {
+    //             "enabled": "[parameters('enableHttpApplicationRouting')]"
+    //         }
+    //     },
+    //     "networkProfile": {
+    //         "networkPlugin": "[parameters('networkPlugin')]",
+    //         "serviceCidr": "[parameters('serviceCidr')]",
+    //         "dnsServiceIP": "[parameters('dnsServiceIP')]",
+    //         "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
+    //     }
+    //   }
+    // }
+  ],
+  "outputs": {
+    // "controlPlaneFQDN": {
+    //   "type": "string",
+    //     "value": "[reference(parameters('clusterName')).fqdn]"
+    //     }
+    }
+}
