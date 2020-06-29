@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+
+    "TAGS": {
+      "type": "object",
+      "defaultValue": {
+        "Company": "GFT Brasil",
+        "Environment": "Dev",
+        "Solution": "WebAPI",
+        "Note": "KeepOnlineOnlyWorkTime"}
+    },   
+    "rgName": {
+      "type": "string",
+      "defaultValue": "rs-gp-dev-001",
+      "metadata": {
+        "description": "Name of the resourceGroup to create"}
+    },
+    "rgLocation": {
+      "type": "string",
+      "defaultValue": "Brazil South",
+      "metadata": {
+        "description": "Location of the resourceGroup to create"}
+    }
+  },
+
+  "variables": {
+
+  },
+
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2019-10-01",
+      "name": "[parameters('rgName')]",
+      "location": "[parameters('rgLocation')]",
+      "tags": "[parameters('TAGS')]",
+      "properties": {}
+    }
+  ],
+  "outputs": {}
+}
