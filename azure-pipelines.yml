@@ -1,0 +1,40 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-2019'
+
+steps:
+- script: echo "Create Resource Group and Resources"
+  displayName: 'IaC'
+
+- script: |
+    echo Adicionando recursos no Azure via pipeline.
+    echo GFT Brasil 2020
+  displayName: 'Run a multi-line script'
+
+
+- task: AzurePowerShell@5
+  inputs:
+    azureSubscription: 'Visual Studio Professional(cd924823-23f9-40a9-8f84-637b8ab11986)'
+    ScriptType: 'InlineScript'
+    Inline: |
+      $templaterg = "./azuredeployrg.json"
+      New-AzSubscriptionDeployment -Location "Brazil South" -TemplateFile $templaterg
+    FailOnStandardError: true
+    azurePowerShellVersion: 'LatestVersion'
+
+- task: AzurePowerShell@5
+  inputs:
+    azureSubscription: 'Visual Studio Professional(cd924823-23f9-40a9-8f84-637b8ab11986)'
+    ScriptType: 'InlineScript'
+    Inline: |
+      $templaters = “./azuredeployrs.json”
+      New-AzResourceGroupDeployment -ResourceGroupName "rs-gp-dev-001" -TemplateFile $templaters
+    FailOnStandardError: true
+    azurePowerShellVersion: 'LatestVersion'
